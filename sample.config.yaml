@@ -1,0 +1,5 @@
+general:
+  cron: "* * * * * *"
+telegram:
+  bottoken: "telegram-bot-token"
+  chatid: -123456789

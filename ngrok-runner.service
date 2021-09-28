@@ -1,0 +1,20 @@
+[Unit]
+Description=Robust Ngrok Runner
+ConditionPathExists=/usr/local/ngrok-runner
+After=network.target
+
+[Service]
+Type=simple
+
+WorkingDirectory=/usr/local/ngrok-runner
+ExecStart=/usr/local/ngrok-runner/ngrok-runner
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=appgoservice
+
+[Install]
+WantedBy=multi-user.target
