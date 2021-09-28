@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -10,12 +9,12 @@ type WebHook struct {
 	Endpoint string
 }
 
-func (b *WebHook) Notify(message string) (bool, error) {
+func (b *WebHook) Notify(message string) error {
 	URL := b.Endpoint
 
 	base, err := url.Parse(URL)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	params := url.Values{}
@@ -24,11 +23,9 @@ func (b *WebHook) Notify(message string) (bool, error) {
 
 	resp, err := http.Get(base.String())
 	if err != nil {
-		return false, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	fmt.Println(resp.Body)
-
-	return resp.StatusCode >= 200 && resp.StatusCode <= 299, err
+	return err
 }

@@ -63,8 +63,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(configuration)
-
 	var telegramNotifier notifier.Notifier = &notifier.Telegram{
 		BotToken: configuration.Telegram.BotToken,
 		ChatId:   configuration.Telegram.ChatId,
@@ -83,14 +81,25 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		message := "Tunnels:\n========\n{tun[0]}"
+		message := "Tunnels:\n========\n"
 
 		for _, tunnel := range tunnels.Tunnels {
 			message += fmt.Sprintln(tunnel.Protocol, "\t-", tunnel.PublicURL)
 		}
 
-		telegramNotifier.Notify(message)
-		webHookNotifier.Notify(message)
+		if err := telegramNotifier.Notify(message); err != nil {
+			fmt.Println(err)
+		}
+
+		if err := webHookNotifier.Notify(message); err != nil {
+			fmt.Println(err)
+
+			message := "Webhook Failure:\n========\n"
+
+			message += err.Error()
+
+			telegramNotifier.Notify(message)
+		}
 	})
 
 	go c.Start()
