@@ -3,6 +3,7 @@ package config
 type Configurations struct {
 	General  GeneralConfigurations
 	Telegram TelegramConfigurations
+	WebHook  WebHookConfigurations
 }
 
 type GeneralConfigurations struct {
@@ -12,4 +13,8 @@ type GeneralConfigurations struct {
 type TelegramConfigurations struct {
 	ChatId   int
 	BotToken string
+}
+
+type WebHookConfigurations struct {
+	Endpoint string
 }

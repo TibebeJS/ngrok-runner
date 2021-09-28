@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
-type Telegram struct {
-	BotToken string
-	ChatId   int
+type WebHook struct {
+	Endpoint string
 }
 
-func (b *Telegram) Notify(message string) (bool, error) {
-	URL := fmt.Sprintf("%s%s%s", "https://api.telegram.org/bot", b.BotToken, "/sendMessage")
+func (b *WebHook) Notify(message string) (bool, error) {
+	URL := b.Endpoint
 
 	base, err := url.Parse(URL)
 	if err != nil {
@@ -21,9 +19,7 @@ func (b *Telegram) Notify(message string) (bool, error) {
 	}
 
 	params := url.Values{}
-	params.Add("parse_mode", "Markdown")
-	params.Add("chat_id", strconv.Itoa(b.ChatId))
-	params.Add("text", message)
+	// params.Add("text", message)
 	base.RawQuery = params.Encode()
 
 	resp, err := http.Get(base.String())

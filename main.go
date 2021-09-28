@@ -65,9 +65,13 @@ func main() {
 
 	fmt.Println(configuration)
 
-	notifier := notifier.Telegram{
+	var telegramNotifier notifier.Notifier = &notifier.Telegram{
 		BotToken: configuration.Telegram.BotToken,
 		ChatId:   configuration.Telegram.ChatId,
+	}
+
+	var webHookNotifier notifier.Notifier = &notifier.WebHook{
+		Endpoint: configuration.WebHook.Endpoint,
 	}
 
 	c := cron.New(cron.WithSeconds())
@@ -85,7 +89,8 @@ func main() {
 			message += fmt.Sprintln(tunnel.Protocol, "\t-", tunnel.PublicURL)
 		}
 
-		notifier.Notify(message)
+		telegramNotifier.Notify(message)
+		webHookNotifier.Notify(message)
 	})
 
 	go c.Start()
