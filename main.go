@@ -56,6 +56,63 @@ func LoadConfig() (c.Configurations, error) {
 	return configuration, err
 }
 
+func FetchTunnelsAndNotify(configuration c.Configurations) func() {
+	var telegramNotifier notifier.Notifier = &notifier.Telegram{
+		BotToken: configuration.Telegram.BotToken,
+		ChatId:   configuration.Telegram.ChatId,
+	}
+
+	var webHookNotifier notifier.Notifier = &notifier.WebHook{
+		Endpoint: configuration.WebHook.Endpoint,
+		Auth: notifier.Auth{
+			Endpoint:  configuration.WebHook.Auth.Endpoint,
+			Email:     configuration.WebHook.Auth.Email,
+			Password:  configuration.WebHook.Auth.Password,
+			FieldName: configuration.WebHook.FieldName,
+		},
+	}
+
+	return func() {
+
+		tunnels, err := FetchTunnels()
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		var tunnelsDiscovered struct {
+			http  string
+			https string
+		}
+
+		message := "Tunnels:\n========\n"
+
+		for _, tunnel := range tunnels.Tunnels {
+			if tunnel.Protocol == "https" {
+				tunnelsDiscovered.https = tunnel.PublicURL
+			} else if tunnel.Protocol == "http" {
+				tunnelsDiscovered.http = tunnel.PublicURL
+			}
+			message += fmt.Sprintln(tunnel.Protocol, "\t-", tunnel.PublicURL)
+		}
+
+		if err := telegramNotifier.Notify(message); err != nil {
+			fmt.Println(err)
+		}
+
+		if err := webHookNotifier.Notify(tunnelsDiscovered.https); err != nil {
+			fmt.Println(err)
+
+			message := "Webhook Failure:\n========\n"
+
+			message += err.Error()
+
+			telegramNotifier.Notify(message)
+		}
+	}
+
+}
+
 func main() {
 
 	configuration, err := LoadConfig()
@@ -69,49 +126,15 @@ func main() {
 
 	cmd.Start()
 
-	var telegramNotifier notifier.Notifier = &notifier.Telegram{
-		BotToken: configuration.Telegram.BotToken,
-		ChatId:   configuration.Telegram.ChatId,
-	}
-
-	var webHookNotifier notifier.Notifier = &notifier.WebHook{
-		Endpoint: configuration.WebHook.Endpoint,
-	}
-
 	c := cron.New()
 
-	c.AddFunc(configuration.General.Cron, func() {
-		tunnels, err := FetchTunnels()
+	go FetchTunnelsAndNotify(configuration)()
 
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		message := "Tunnels:\n========\n"
-
-		for _, tunnel := range tunnels.Tunnels {
-			message += fmt.Sprintln(tunnel.Protocol, "\t-", tunnel.PublicURL)
-		}
-
-		if err := telegramNotifier.Notify(message); err != nil {
-			fmt.Println(err)
-		}
-
-		if err := webHookNotifier.Notify(message); err != nil {
-			fmt.Println(err)
-
-			message := "Webhook Failure:\n========\n"
-
-			message += err.Error()
-
-			telegramNotifier.Notify(message)
-		}
-	})
+	c.AddFunc(configuration.General.Cron, FetchTunnelsAndNotify(configuration))
 
 	go c.Start()
 
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 	<-sig
-	// c.Stop()
 }

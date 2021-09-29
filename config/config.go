@@ -16,5 +16,13 @@ type TelegramConfigurations struct {
 }
 
 type WebHookConfigurations struct {
+	Endpoint  string
+	Auth      AuthConfigurations
+	FieldName string
+}
+
+type AuthConfigurations struct {
 	Endpoint string
+	Email    string
+	Password string
 }
