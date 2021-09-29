@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 
 	c "github.com/TibebeJS/ngrok-runner/config"
@@ -35,7 +36,7 @@ func FetchTunnels() (models.TunnelsResponse, error) {
 func LoadConfig() (c.Configurations, error) {
 	viper.SetConfigName("config")
 
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("/etc/ngrok-runner/")
 
 	viper.AutomaticEnv()
 
@@ -62,6 +63,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	script := "start_ngrok.sh"
+	cmd := exec.Command("nohup", "sh", script)
+
+	cmd.Start()
 
 	var telegramNotifier notifier.Notifier = &notifier.Telegram{
 		BotToken: configuration.Telegram.BotToken,
