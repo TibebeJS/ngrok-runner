@@ -78,7 +78,7 @@ func main() {
 		Endpoint: configuration.WebHook.Endpoint,
 	}
 
-	c := cron.New(cron.WithSeconds())
+	c := cron.New()
 
 	c.AddFunc(configuration.General.Cron, func() {
 		tunnels, err := FetchTunnels()
